@@ -147,6 +147,7 @@ router.get("/post/:post_id", async (req, res) => {
         res.status(201).json(inserted);
       }
     } catch (error) {
+        console.log(error);
       res.status(500).json({ message: "Veritabanına kaydedilirken bir hata oluştu" });
     }
   });
