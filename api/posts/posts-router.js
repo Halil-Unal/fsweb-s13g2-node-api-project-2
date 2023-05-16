@@ -9,7 +9,7 @@ const {  find,
     remove,
     findPostComments,
     findCommentById,
-    insertComment, } = require("./posts-model");
+    insertComment } = require("./posts-model");
 
 
    router.get("/", async (req, res) => {
@@ -105,8 +105,51 @@ catch{
 
 })
 
-
-
-
+router.get("/post/:post_id", async (req, res) => {
+    try {
+      const comments = await findPostComments(req.params.post_id);
+      if (!comments) {
+        res.status(400).json({ message: "Verilen id'ye ait bileşen bulunamadı" });
+      } else {
+        res.json(comments);
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Kullanıcı bilgisi alınamadı" });
+    }
+  });
+  
+  router.get("/posts/:id", async (req, res) => {
+    try {
+      const comments = await findCommentById(req.params.id);
+      if (!comments) {
+        res.status(400).json({ message: "Verilen id'ye ait bileşen bulunamadı" });
+      } else {
+        res.json(comments);
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Kullanıcı bilgisi alınamadı" });
+    }
+  });
+  
+  router.post("/posts", async (req, res) => {
+    try {
+      const { text, post_id, created_at, updated_at, post } = req.body;
+      if (!text || !post_id || !created_at || !updated_at || !post) {
+        res.status(400).json({ message: "Lütfen kullanıcı için bilgileri sağlayın" });
+      } else {
+        const inserted = await insertComment({
+          text: text,
+          post_id: post_id,
+          created_at: created_at,
+          updated_at: updated_at,
+          post: post
+        });
+        res.status(201).json(inserted);
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Veritabanına kaydedilirken bir hata oluştu" });
+    }
+  });
+  
 
 module.exports = router;
