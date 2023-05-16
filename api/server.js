@@ -7,7 +7,7 @@ const server = express();
 const datarouter = require("./posts/posts-router");
 server.use(express.json());
 
-server.use('/api/datas', datarouter);
+server.use('/api/posts', datarouter);
 
 server.get('/', (req, res) => {
     res.send('Server is up and running!...')
