@@ -1,6 +1,6 @@
 // posts için gerekli routerları buraya yazın
 const router = require('express').Router();
-const postmodel=require("./posts-model");
+const postsModel=require("./posts-model");
 const { json } = require('express');
 const {  find,
     findById,
@@ -58,56 +58,55 @@ router.post("/",async(req,res)=>{
 })
 
 router.put("/:id",async (req,res)=>{
-    try{
-        const {title,contents,created_at,updated_at}=req.body;
-        if (!title || !contents || !created_at || !updated_at) {
-            res
-              .status(400)
-              .json({ message: "Lütfen gönderi için title ve contents sağlayın" });
-          }
-          else  {
-            const user = await findById(req.params.id);
-            if(!user){
-                res
-                .status(404)
-                .json({message:"Belirtilen ID'li gönderi bulunamadı"})
+    try {
+            const post = await postsModel.findById(req.params.id);
+            if(!post){
+                res.status(404).json({message:"Belirtilen ID'li gönderi bulunamadı"});
             }
-          
-          else {
-            const updateuser = await update(req.params.id,{ title:title,contents:contents,created_at:created_at,updated_at:updated_at })
-            const insertedpost= await findById(updateuser.id)
-            res.json(insertedpost);
-          }
+            else{
+                let {title,contents} = req.body;
+                if(!title || !contents){
+                    res.status(400).json({message:"Lütfen gönderi için bir title ve contents sağlayın"});
+                }else{
+                    await postsModel.update(req.params.id,{title,contents});
+                    const updatedPost = await postsModel.findById(req.params.id);
+                    res.json(updatedPost);
+                }
+            }
+    } catch (error) {
+        res.status(500).json({message:"Gönderi bilgileri güncellenemedi"});
+    }
+    });
+
+
+router.delete("/:id",async (req,res)=>{
+    try {
+        const post = await postsModel.findById(req.params.id);
+        if(!post){
+            res.status(404).json({message:"Belirtilen ID'li gönderi bulunamadı"});
+        }else{
+           await postsModel.remove(req.params.id);
+           res.json(post); 
         }
+    } catch (error) {
+        res.status(500).json({message:"Gönderi silinemedi" });
     }
-    catch{
-        res.status(500).json({ message: "Gönderi bilgileri güncellenemedi" });
+});
+router.get("/:id/comments",async (req,res)=>{
+    try {
+        const post = await postsModel.findById(req.params.id);
+        if(!post){
+            res.status(404).json({message:"Belirtilen ID'li gönderi bulunamadı"});
+        }else{
+            const postsComments = await postsModel.findPostComments(req.params.id);
+            res.json(postsComments);
+        }
+    } catch (error) {
+        res.status(500).json({message:"Yorumlar bilgisi getirilemedi"});
     }
-})
+});
 
-router.delete("/:id",async(req,res)=>{
-try{
-
-    const user = await findById(req.params.id);
-    if(!user){
-res
-.status(404)
-.json({message:"Belirtilen ID li gönderi bulunamadı"})
-    }
-    else{
-        const updatedata=await remove(req.params.id);
-        const insertedpost= await findById(updatedata.id)
-        res.json(insertedpost);
-    }
-
-
-}
-catch{ 
-    res.status(500).json({ message: "Gönderi silinemedi" });
-  }
-
-})
-
+module.exports = router;
 router.get("/post/:post_id", async (req, res) => {
     try {
       const comments = await findPostComments(req.params.post_id);
@@ -121,19 +120,7 @@ router.get("/post/:post_id", async (req, res) => {
     }
   });
   
-  router.get("/:id/comments", async (req, res) => {
-    try {
-      const comments = await findCommentById(req.params.id);
-      if (!comments) {
-        res.status(400).json({ message: "Girilen ID'li gönderi bulunamadı." });
-      } else {
-        res.json(comments);
-      }
-    } catch (error) {
-      res.status(500).json({ message: "Yorumlar bilgisi getirilemedi" });
-    }
-  });
-  
+
   router.post("/comments", async (req, res) => {
     try {
       const { text, post_id, created_at, updated_at, post } = req.body;
