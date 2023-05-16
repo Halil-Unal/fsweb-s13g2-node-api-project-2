@@ -1,6 +1,6 @@
 // posts için gerekli routerları buraya yazın
 const router = require('express').Router();
-
+const postmodel=require("./posts-model");
 const { json } = require('express');
 const {  find,
     findById,
@@ -27,27 +27,28 @@ try{
     const user = await findById(req.params.id) ;
     if(!user){
         res.status(404)
-        .json({message:"veri bulunamadı"})
+        .json({message:"Belirtilen ID'li gönderi bulunamadı"})
     }
     else{
         res.json(user);
     }
 }
 catch(error){
-    res.status(500),json({message:"bilgi alınamadı"})
+    res.status(500),json({message:"Gönderi bilgisi alınamadı"})
 }
 })
 router.post("/",async(req,res)=>{
     try{
-       const {title,contents,created_at,updated_at}=req.body;
-       if (!title || !contents || !created_at || !updated_at) {
+       const {title,contents}=req.body;
+       if (!title || !contents ) {
         res
           .status(400)
-          .json({ message: "Lütfen kullanıcı için bilgileri sağlayınsağlayın" });
+          .json({ message: "Lütfen gönderi için bir title ve contents sağlayın" });
       }
       else {
-        const inserted = await insert({ title:title,contents:contents,created_at:created_at,updated_at:updated_at });
-        res.status(201).json(inserted);
+        const inserted = await insert({ title:title,contents:contents});
+        const insertedpost= await findById(inserted.id)
+        res.status(201).json(insertedpost);
       }
     } catch (error) {
       res
@@ -62,24 +63,25 @@ router.put("/:id",async (req,res)=>{
         if (!title || !contents || !created_at || !updated_at) {
             res
               .status(400)
-              .json({ message: "Lütfen kullanıcı için bilgileri sağlayınsağlayın" });
+              .json({ message: "Lütfen gönderi için title ve contents sağlayın" });
           }
           else  {
             const user = await findById(req.params.id);
             if(!user){
                 res
-                .status(400)
-                .json({message:"verilen id ye ait bileşen bulunamadı"})
+                .status(404)
+                .json({message:"Belirtilen ID'li gönderi bulunamadı"})
             }
           
           else {
             const updateuser = await update(req.params.id,{ title:title,contents:contents,created_at:created_at,updated_at:updated_at })
-            res.json(updateuser);
+            const insertedpost= await findById(updateuser.id)
+            res.json(insertedpost);
           }
         }
     }
     catch{
-        res.status(500).json({ message: "Kullanıcı bilgisi alınamadı" });
+        res.status(500).json({ message: "Gönderi bilgileri güncellenemedi" });
     }
 })
 
@@ -89,18 +91,19 @@ try{
     const user = await findById(req.params.id);
     if(!user){
 res
-.status(400)
-.json({message:"verilen id ye ait bileşen bulunamadı"})
+.status(404)
+.json({message:"Belirtilen ID li gönderi bulunamadı"})
     }
     else{
         const updatedata=await remove(req.params.id);
-        res.json(updatedata);
+        const insertedpost= await findById(updatedata.id)
+        res.json(insertedpost);
     }
 
 
 }
 catch{ 
-    res.status(500).json({ message: "Kullanıcı bilgisi alınamadı" });
+    res.status(500).json({ message: "Gönderi silinemedi" });
   }
 
 })
@@ -118,20 +121,20 @@ router.get("/post/:post_id", async (req, res) => {
     }
   });
   
-  router.get("/posts/:id", async (req, res) => {
+  router.get("/:id/comments", async (req, res) => {
     try {
       const comments = await findCommentById(req.params.id);
       if (!comments) {
-        res.status(400).json({ message: "Verilen id'ye ait bileşen bulunamadı" });
+        res.status(400).json({ message: "Girilen ID'li gönderi bulunamadı." });
       } else {
         res.json(comments);
       }
     } catch (error) {
-      res.status(500).json({ message: "Kullanıcı bilgisi alınamadı" });
+      res.status(500).json({ message: "Yorumlar bilgisi getirilemedi" });
     }
   });
   
-  router.post("/posts", async (req, res) => {
+  router.post("/comments", async (req, res) => {
     try {
       const { text, post_id, created_at, updated_at, post } = req.body;
       if (!text || !post_id || !created_at || !updated_at || !post) {
